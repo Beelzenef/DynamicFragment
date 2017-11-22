@@ -18,7 +18,10 @@ import android.widget.TextView;
 public class FragmentB extends Fragment {
 
     private TextView txtV_textoACambiar;
-    private String msg;
+    //private String msg;
+    //private int size;
+
+    private View rootView;
 
     public static final String TAG = "FragmentB";
 
@@ -33,6 +36,13 @@ public class FragmentB extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Retener el estado de un fragment
+        // INCONVENIENTES: para que el estado dinámico de un fragment sea permanente ante un
+        // cambio de configuración usar setRetainInstance
+        // Si lo utilizamos con frecuencia, obligamos a que la app guarde en memoria todos los datos
+        // que habíamos mostrado
+        setRetainInstance(true);
+
         Log.d(TAG, "onCreate");
     }
 
@@ -41,17 +51,26 @@ public class FragmentB extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         //return super.onCreateView(inflater, container, savedInstanceState);
-        View view = inflater.inflate(R.layout.fragmentb, container, false);
+        rootView = inflater.inflate(R.layout.fragmentb, container, false);
 
-        // Obtener View para modificar
-        txtV_textoACambiar = view.findViewById(R.id.txtV_TextoCambiado);
+        if (rootView == null) {
+            // Obtener View para modificar
+            txtV_textoACambiar = rootView.findViewById(R.id.txtV_TextoCambiado);
 
+        }
         Log.d(TAG, "onCreateView");
 
-        return view;
+        return rootView;
 
     }
 
+
+    @Override
+    public void onViewStateRestored(Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+    }
+
+    /*
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -59,17 +78,21 @@ public class FragmentB extends Fragment {
         outState.putString("msg", txtV_textoACambiar.getText().toString());
         outState.putFloat("size", txtV_textoACambiar.getTextSize());
     }
+    */
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         Bundle b = getArguments();
-        if (b != null) {
-            changeTextSize(b.getString("msg"), b.getInt("size"));
+        if (savedInstanceState == null) {
+            if (b != null) {
+                msg = b.getString("msg");
+                size = b.getInt("size");
+            }
         }
 
-
+        changeTextSize(msg, size);
         Log.d(TAG, "onViewCreated");
     }
 
@@ -139,5 +162,21 @@ public class FragmentB extends Fragment {
         super.onDetach();
 
         Log.d(TAG, "onDetach");
+    }
+
+    /**
+     * Patron FACTORY, simplificación del patrón BUILDER
+     * @param b Bundle a cargar
+     * @return Devuelve FragmentB cargado con Bundle
+     */
+    public static Fragment newInstance(Bundle b) {
+        FragmentB fragB = new FragmentB();
+
+        if (b != null)
+        {
+            fragB.setArguments(b);
+        }
+        return fragB;
+
     }
 }
